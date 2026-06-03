@@ -46,5 +46,4 @@ public interface UserRepository extends JpaRepository<User, Long> {
     @Query("select distinct u from User u where u.id in :ids order by u.id")
     List<User> findAllWithContactsByIdIn(@Param("ids") List<Long> ids);
 
-    List<User> getAllUsers();
 }

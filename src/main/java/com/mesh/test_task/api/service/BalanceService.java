@@ -24,7 +24,7 @@ public class BalanceService {
     @Scheduled(fixedRate = 30000)
     @Transactional
     public void increaseBalance() {
-        List<User> users = userRepository.getAllUsers();
+        List<User> users = userRepository.findAll();
         for (var user : users) {
             Account account = accountRepository.getAccountByUser(user);
             BigDecimal startBalance = account.getStartBalance();
