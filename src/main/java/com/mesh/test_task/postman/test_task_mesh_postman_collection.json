@@ -1,0 +1,419 @@
+{
+  "info": {
+    "name": "Test Task Mesh API Collection",
+    "_postman_id": "9f4f3569-853d-43a5-8f6f-6a5a385f60f3",
+    "description": "One-click прогон для auth + me emails/phones endpoint-ов.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8082"
+    },
+    {
+      "key": "login",
+      "value": "seed.user@example.com"
+    },
+    {
+      "key": "password",
+      "value": "Qwerty_123"
+    },
+    {
+      "key": "accessToken",
+      "value": ""
+    },
+    {
+      "key": "emailId",
+      "value": ""
+    },
+    {
+      "key": "phoneId",
+      "value": ""
+    },
+    {
+      "key": "newEmail",
+      "value": ""
+    },
+    {
+      "key": "updatedEmail",
+      "value": ""
+    },
+    {
+      "key": "newPhone",
+      "value": ""
+    },
+    {
+      "key": "updatedPhone",
+      "value": ""
+    },
+    {
+      "key": "duplicateEmail",
+      "value": ""
+    },
+    {
+      "key": "missingEmailId",
+      "value": ""
+    }
+  ],
+  "item": [
+    {
+      "name": "0) Setup variables",
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "const ts = Date.now();",
+              "pm.collectionVariables.set('newEmail', `mesh.new.${ts}@example.com`);",
+              "pm.collectionVariables.set('updatedEmail', `mesh.updated.${ts}@example.com`);",
+              "pm.collectionVariables.set('newPhone', `79${String(ts).slice(-9)}`);",
+              "pm.collectionVariables.set('updatedPhone', `78${String(ts).slice(-9)}`);",
+              "pm.collectionVariables.set('missingEmailId', String(900000000 + (ts % 1000000)));",
+              "const login = pm.collectionVariables.get('login') || '';",
+              "if (!pm.collectionVariables.get('duplicateEmail') && login.includes('@')) {",
+              "  pm.collectionVariables.set('duplicateEmail', login);",
+              "}"
+            ]
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Setup vars are prepared', function () {",
+              "  pm.expect(pm.collectionVariables.get('newEmail')).to.include('@');",
+              "  pm.expect(pm.collectionVariables.get('updatedEmail')).to.include('@');",
+              "  pm.expect(pm.collectionVariables.get('newPhone')).to.match(/^\\d{11}$/);",
+              "  pm.expect(pm.collectionVariables.get('updatedPhone')).to.match(/^\\d{11}$/);",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": "{{baseUrl}}/actuator/health"
+      }
+    },
+    {
+      "name": "1) Login (POST /v1/auth/login)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('200 OK', function () { pm.response.to.have.status(200); });",
+              "const json = pm.response.json();",
+              "pm.collectionVariables.set('accessToken', json.accessToken || '');",
+              "pm.test('accessToken received', function () {",
+              "  pm.expect(pm.collectionVariables.get('accessToken')).to.not.equal('');",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"login\": \"{{login}}\",\n  \"password\": \"{{password}}\"\n}"
+        },
+        "url": "{{baseUrl}}/v1/auth/login"
+      }
+    },
+    {
+      "name": "2) Add Email (POST /v1/me/emails)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('201 Created', function () { pm.response.to.have.status(201); });",
+              "const json = pm.response.json();",
+              "pm.collectionVariables.set('emailId', String(json.id || ''));",
+              "pm.test('emailId received', function () {",
+              "  pm.expect(pm.collectionVariables.get('emailId')).to.not.equal('');",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{accessToken}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"email\": \"{{newEmail}}\"\n}"
+        },
+        "url": "{{baseUrl}}/v1/me/emails"
+      }
+    },
+    {
+      "name": "3) Update Email (PUT /v1/me/emails/{{emailId}})",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('200 OK', function () { pm.response.to.have.status(200); });",
+              "const json = pm.response.json();",
+              "pm.test('Email updated', function () {",
+              "  pm.expect(String(json.id)).to.equal(pm.collectionVariables.get('emailId'));",
+              "  pm.expect(json.email).to.equal(pm.collectionVariables.get('updatedEmail'));",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{accessToken}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"email\": \"{{updatedEmail}}\"\n}"
+        },
+        "url": "{{baseUrl}}/v1/me/emails/{{emailId}}"
+      }
+    },
+    {
+      "name": "4) Delete Email (DELETE /v1/me/emails/{{emailId}})",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('204 No Content', function () { pm.response.to.have.status(204); });"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "DELETE",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{accessToken}}"
+          }
+        ],
+        "url": "{{baseUrl}}/v1/me/emails/{{emailId}}"
+      }
+    },
+    {
+      "name": "5) Add Phone (POST /v1/me/phones)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('201 Created', function () { pm.response.to.have.status(201); });",
+              "const json = pm.response.json();",
+              "pm.collectionVariables.set('phoneId', String(json.id || ''));",
+              "pm.test('phoneId received', function () {",
+              "  pm.expect(pm.collectionVariables.get('phoneId')).to.not.equal('');",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{accessToken}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"phone\": \"{{newPhone}}\"\n}"
+        },
+        "url": "{{baseUrl}}/v1/me/phones"
+      }
+    },
+    {
+      "name": "6) Update Phone (PUT /v1/me/phones/{{phoneId}})",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('200 OK', function () { pm.response.to.have.status(200); });",
+              "const json = pm.response.json();",
+              "pm.test('Phone updated', function () {",
+              "  pm.expect(String(json.id)).to.equal(pm.collectionVariables.get('phoneId'));",
+              "  pm.expect(json.phone).to.equal(pm.collectionVariables.get('updatedPhone'));",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{accessToken}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"phone\": \"{{updatedPhone}}\"\n}"
+        },
+        "url": "{{baseUrl}}/v1/me/phones/{{phoneId}}"
+      }
+    },
+    {
+      "name": "7) Delete Phone (DELETE /v1/me/phones/{{phoneId}})",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('204 No Content', function () { pm.response.to.have.status(204); });"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "DELETE",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{accessToken}}"
+          }
+        ],
+        "url": "{{baseUrl}}/v1/me/phones/{{phoneId}}"
+      }
+    },
+    {
+      "name": "8) Negative: /v1/me/emails without token -> 401",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('401 Unauthorized', function () { pm.response.to.have.status(401); });"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"email\": \"{{newEmail}}\"\n}"
+        },
+        "url": "{{baseUrl}}/v1/me/emails"
+      }
+    },
+    {
+      "name": "9) Negative: duplicate email -> error",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Duplicate email returns error', function () {",
+              "  pm.expect(pm.response.code).to.be.at.least(400);",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{accessToken}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"email\": \"{{duplicateEmail}}\"\n}"
+        },
+        "url": "{{baseUrl}}/v1/me/emails"
+      }
+    },
+    {
+      "name": "10) Negative: delete missing emailId -> error",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Missing email id returns error', function () {",
+              "  pm.expect(pm.response.code).to.be.at.least(400);",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "DELETE",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{accessToken}}"
+          }
+        ],
+        "url": "{{baseUrl}}/v1/me/emails/{{missingEmailId}}"
+      }
+    }
+  ]
+}
