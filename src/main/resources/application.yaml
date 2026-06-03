@@ -1,0 +1,22 @@
+spring:
+  application:
+    name: test-task-mesh
+  config:
+    import: optional:file:.env[.properties]
+  datasource:
+    url: jdbc:postgresql://localhost:5432/demo1
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
+  jpa:
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+  liquibase:
+    enabled: false
+
+
+jwt:
+  secret: ${JWT_SECRET}
+  expiration: ${JWT_EXPIRATION:86400000}
