@@ -13,6 +13,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -30,12 +31,20 @@ public class UserSearchService {
     private final UserSearchMapper userSearchMapper;
 
     @Transactional(readOnly = true)
-    public UserSearchResponse searchUsers(String phone, String email, String name, Integer page, Integer size) {
+    public UserSearchResponse searchUsers(
+            String phone,
+            String email,
+            String name,
+            LocalDate dateOfBirth,
+            Integer page,
+            Integer size
+    ) {
         Pageable pageable = pageRequest(page, size);
         Page<Long> userIdsPage = userRepository.searchUserIds(
                 clean(phone),
                 clean(email),
                 clean(name),
+                dateOfBirth,
                 pageable);
         List<UserSearchItemResponse> items = loadUsers(userIdsPage.getContent()).stream()
                 .map(userSearchMapper::toItemResponse)

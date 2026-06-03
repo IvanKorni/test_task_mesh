@@ -15,6 +15,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.time.LocalDate;
+
 @RestController
 @Validated
 @RequiredArgsConstructor
@@ -59,8 +61,15 @@ public class CurrentUserInfoController implements UserInfoApi {
     }
 
     @Override
-    public ResponseEntity<UserSearchResponse> searchUsers(String phone, String email, String name, Integer page, Integer size) {
-        UserSearchResponse response = userSearchService.searchUsers(phone, email, name, page, size);
+    public ResponseEntity<UserSearchResponse> searchUsers(
+            String phone,
+            String email,
+            String name,
+            LocalDate dateOfBirth,
+            Integer page,
+            Integer size
+    ) {
+        UserSearchResponse response = userSearchService.searchUsers(phone, email, name, dateOfBirth, page, size);
         return ResponseEntity.ok(response);
     }
 

@@ -158,6 +158,12 @@ paths:
           schema:
             type: string
             maxLength: 500
+        - name: dateOfBirth
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date
         - name: page
           in: query
           required: false

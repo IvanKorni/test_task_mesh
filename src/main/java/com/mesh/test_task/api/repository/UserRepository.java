@@ -9,6 +9,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
@@ -27,18 +28,21 @@ public interface UserRepository extends JpaRepository<User, Long> {
                     + "and (:email is null or exists ("
                     + "select 1 from EmailData em where em.user = u and em.email = :email)) "
                     + "and (:name is null or lower(u.name) like lower(concat(:name, '%'))) "
+                    + "and (:dateOfBirth is null or u.dateOfBirth > :dateOfBirth) "
                     + "order by u.id",
             countQuery = "select count(u.id) from User u "
                     + "where (:phone is null or exists ("
                     + "select 1 from PhoneData ph where ph.user = u and ph.phone = :phone)) "
                     + "and (:email is null or exists ("
                     + "select 1 from EmailData em where em.user = u and em.email = :email)) "
-                    + "and (:name is null or lower(u.name) like lower(concat(:name, '%')))"
+                    + "and (:name is null or lower(u.name) like lower(concat(:name, '%'))) "
+                    + "and (:dateOfBirth is null or u.dateOfBirth > :dateOfBirth)"
     )
     Page<Long> searchUserIds(
             @Param("phone") String phone,
             @Param("email") String email,
             @Param("name") String name,
+            @Param("dateOfBirth") LocalDate dateOfBirth,
             Pageable pageable
     );
 
