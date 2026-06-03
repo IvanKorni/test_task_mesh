@@ -24,6 +24,6 @@ public class Account{
     @Column(name = "balance", nullable = false)
     private BigDecimal balance;
 
-    @Column(name = "startBalance", nullable = false)
+    @Column(name = "start_balance", nullable = false)
     private BigDecimal startBalance;
 }
