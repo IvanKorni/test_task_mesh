@@ -97,6 +97,9 @@ public class UserContactService {
     public void deletePhone(Long userId, Long phoneId) {
         PhoneData phone = userPhoneRepository.findByIdAndUser_Id(phoneId, userId)
                 .orElseThrow(() -> new RuntimeException("Phone not found"));
+
+        long count = userPhoneRepository.countByUser_Id(userId);
+        if (count <= 1) throw new RuntimeException("Can't delete last phone");
         userPhoneRepository.delete(phone);
     }
 }

@@ -10,4 +10,5 @@ import java.util.Optional;
 public interface UserPhoneRepository extends JpaRepository<PhoneData, Long> {
     boolean existsByPhone(String phone);
     Optional<PhoneData> findByIdAndUser_Id(Long phoneId, Long userId);
+    long countByUser_Id(Long userId);
 }
