@@ -1,0 +1,53 @@
+openapi: 3.0.0
+info:
+  title: User Info API
+  description: REST API для взаимодействия с User Info сервисом.
+  version: 1.0.0
+servers:
+  - url: http://localhost:8082
+
+paths:
+  /v1/auth/login:
+    post:
+      summary: Получить JWT токен
+      operationId: login
+      tags:
+        - Auth
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        '200':
+          description: JWT token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TokenResponse'
+
+components:
+  schemas:
+    LoginRequest:
+      type: object
+      required:
+        - login
+        - password
+      properties:
+        login:
+          type: string
+          description: Email or phone
+          maxLength: 200
+        password:
+          type: string
+          minLength: 8
+          maxLength: 500
+
+    TokenResponse:
+      type: object
+      required:
+        - accessToken
+      properties:
+        accessToken:
+          type: string

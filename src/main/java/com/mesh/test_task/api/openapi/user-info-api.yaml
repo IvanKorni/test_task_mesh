@@ -1,0 +1,312 @@
+openapi: 3.0.0
+info:
+  title: User Info API
+  description: REST API для взаимодействия с User Info сервисом.
+  version: 1.0.0
+servers:
+  - url: http://localhost:8082
+
+paths:
+  /v1/me/emails:
+    post:
+      summary: Добавить email текущему пользователю
+      operationId: "addEmail"
+      tags:
+        - UserInfo
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AddEmailRequest'
+      responses:
+        '201':
+          description: Email успешно добавлен
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserEmailResponse'
+
+  /v1/me/emails/{emailId}:
+    put:
+      summary: Обновить email у пользователя
+      operationId: "updateEmail"
+      tags:
+        - UserInfo
+      parameters:
+        - name: emailId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateEmailRequest'
+      responses:
+        '200':
+          description: Email успешно обновлен
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserEmailResponse'
+    delete:
+      summary: Удалить email у пользователя
+      operationId: "deleteEmail"
+      tags:
+        - UserInfo
+      parameters:
+        - name: emailId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '204':
+          description: Успешно удален
+
+  /v1/me/phones:
+    post:
+      summary: Добавить телефон текущему пользователю
+      operationId: "addPhone"
+      tags:
+        - UserInfo
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AddPhoneRequest'
+      responses:
+        '201':
+          description: Phone успешно добавлен
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserPhoneResponse'
+
+  /v1/me/phones/{phoneId}:
+    put:
+      summary: Обновить телефон у пользователя
+      operationId: "updatePhone"
+      tags:
+        - UserInfo
+      parameters:
+        - name: phoneId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdatePhoneRequest'
+      responses:
+        '200':
+          description: Телефон успешно обновлен
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserPhoneResponse'
+    delete:
+      summary: Удалить телефон у пользователя
+      operationId: "deletePhone"
+      tags:
+        - UserInfo
+      parameters:
+        - name: phoneId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '204':
+          description: Успешно удален
+
+  /v1/users/search:
+    get:
+      summary: Поиск пользователей
+      operationId: "searchUsers"
+      tags:
+        - UserInfo
+      parameters:
+        - name: phone
+          in: query
+          required: false
+          schema:
+            type: string
+            pattern: '^\+?[0-9]{10,13}$'
+            maxLength: 13
+        - name: email
+          in: query
+          required: false
+          schema:
+            type: string
+            format: email
+            maxLength: 200
+        - name: name
+          in: query
+          required: false
+          schema:
+            type: string
+            maxLength: 500
+        - name: page
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+        - name: size
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+      responses:
+        '200':
+          description: Пользователи найдены
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserSearchResponse'
+
+components:
+  schemas:
+    UserEmailResponse:
+      type: object
+      required:
+        - id
+        - email
+      properties:
+        id:
+          type: integer
+          format: int64
+        email:
+          type: string
+          format: email
+          maxLength: 200
+
+    AddEmailRequest:
+      type: object
+      required:
+        - email
+      properties:
+        email:
+          type: string
+          format: email
+          maxLength: 200
+
+    UpdateEmailRequest:
+      type: object
+      required:
+        - email
+      properties:
+        email:
+          type: string
+          format: email
+          maxLength: 200
+
+    UserPhoneResponse:
+      type: object
+      required:
+        - id
+        - phone
+      properties:
+        id:
+          type: integer
+          format: int64
+        phone:
+          type: string
+          format: phone
+          pattern: '^\+?[0-9]{10,13}$'
+          maxLength: 13
+
+    AddPhoneRequest:
+      type: object
+      required:
+        - phone
+      properties:
+        phone:
+          type: string
+          format: phone
+          pattern: '^\+?[0-9]{10,13}$'
+          maxLength: 13
+
+    UpdatePhoneRequest:
+      type: object
+      required:
+        - phone
+      properties:
+        phone:
+          type: string
+          format: phone
+          pattern: '^\+?[0-9]{10,13}$'
+          maxLength: 13
+
+    UserSearchItemResponse:
+      type: object
+      required:
+        - id
+        - emails
+        - phones
+      properties:
+        id:
+          type: integer
+          format: int64
+        name:
+          type: string
+          maxLength: 500
+        dateOfBirth:
+          type: string
+          format: date
+        emails:
+          type: array
+          items:
+            type: string
+            format: email
+            maxLength: 200
+        phones:
+          type: array
+          items:
+            type: string
+            maxLength: 13
+
+    UserSearchResponse:
+      type: object
+      required:
+        - items
+        - page
+        - size
+        - totalElements
+        - totalPages
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/UserSearchItemResponse'
+        page:
+          type: integer
+        size:
+          type: integer
+        totalElements:
+          type: integer
+          format: int64
+        totalPages:
+          type: integer
+
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
