@@ -16,10 +16,10 @@ import java.util.Optional;
 @Repository
 public interface UserRepository extends JpaRepository<User, Long> {
     @Query("select u from EmailData em join em.user u where em.email = :email")
-    Optional<User> findByEmail(@Param("email")String email);
+    Optional<User> findByEmail(@Param("email") String email);
 
     @Query("select u from PhoneData ph join ph.user u where ph.phone = :phone")
-    Optional<User> findByPhone(@Param("phone")String phone);
+    Optional<User> findByPhone(@Param("phone") String phone);
 
     @Query(
             value = "select u.id from User u "
@@ -28,7 +28,29 @@ public interface UserRepository extends JpaRepository<User, Long> {
                     + "and (:email is null or exists ("
                     + "select 1 from EmailData em where em.user = u and em.email = :email)) "
                     + "and (:name is null or lower(u.name) like lower(concat(:name, '%'))) "
-                    + "and (:dateOfBirth is null or u.dateOfBirth > :dateOfBirth) "
+                    + "order by u.id",
+            countQuery = "select count(u.id) from User u "
+                    + "where (:phone is null or exists ("
+                    + "select 1 from PhoneData ph where ph.user = u and ph.phone = :phone)) "
+                    + "and (:email is null or exists ("
+                    + "select 1 from EmailData em where em.user = u and em.email = :email)) "
+                    + "and (:name is null or lower(u.name) like lower(concat(:name, '%')))"
+    )
+    Page<Long> searchUserIds(
+            @Param("phone") String phone,
+            @Param("email") String email,
+            @Param("name") String name,
+            Pageable pageable
+    );
+
+    @Query(
+            value = "select u.id from User u "
+                    + "where (:phone is null or exists ("
+                    + "select 1 from PhoneData ph where ph.user = u and ph.phone = :phone)) "
+                    + "and (:email is null or exists ("
+                    + "select 1 from EmailData em where em.user = u and em.email = :email)) "
+                    + "and (:name is null or lower(u.name) like lower(concat(:name, '%'))) "
+                    + "and u.dateOfBirth > :dateOfBirth "
                     + "order by u.id",
             countQuery = "select count(u.id) from User u "
                     + "where (:phone is null or exists ("
@@ -36,9 +58,9 @@ public interface UserRepository extends JpaRepository<User, Long> {
                     + "and (:email is null or exists ("
                     + "select 1 from EmailData em where em.user = u and em.email = :email)) "
                     + "and (:name is null or lower(u.name) like lower(concat(:name, '%'))) "
-                    + "and (:dateOfBirth is null or u.dateOfBirth > :dateOfBirth)"
+                    + "and u.dateOfBirth > :dateOfBirth"
     )
-    Page<Long> searchUserIds(
+    Page<Long> searchUserIdsBornAfter(
             @Param("phone") String phone,
             @Param("email") String email,
             @Param("name") String name,

@@ -5,6 +5,57 @@
     "description": "One-click прогон для auth + me emails/phones endpoint-ов на seed-данных из Liquibase.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "const requestUrl = pm.request.url ? pm.request.url.toString() : '';",
+          "const publicPaths = ['/v1/auth/login', '/v3/api-docs', '/swagger-ui', '/actuator/health'];",
+          "const isPublicRequest = publicPaths.some(path => requestUrl.includes(path));",
+          "const token = pm.collectionVariables.get('meshAccessToken');",
+          "",
+          "function isExpiredJwt(value) {",
+          "  try {",
+          "    const payload = JSON.parse(atob(value.split('.')[1]));",
+          "    return payload.exp && Date.now() >= (payload.exp * 1000 - 5000);",
+          "  } catch (e) {",
+          "    return true;",
+          "  }",
+          "}",
+          "",
+          "if (!isPublicRequest && (!token || isExpiredJwt(token))) {",
+          "  const baseUrl = pm.collectionVariables.get('meshBaseUrl');",
+          "  const login = pm.collectionVariables.get('meshLogin');",
+          "  const password = pm.collectionVariables.get('meshPassword');",
+          "",
+          "  pm.sendRequest({",
+          "    url: `${baseUrl}/v1/auth/login`,",
+          "    method: 'POST',",
+          "    header: {",
+          "      'Content-Type': 'application/json'",
+          "    },",
+          "    body: {",
+          "      mode: 'raw',",
+          "      raw: JSON.stringify({ login, password })",
+          "    }",
+          "  }, function (err, response) {",
+          "    if (err) {",
+          "      throw new Error(`Auto-login failed: ${err.message || err}`);",
+          "    }",
+          "    if (!response || response.code !== 200) {",
+          "      throw new Error(`Auto-login failed with status ${response ? response.code : 'unknown'}`);",
+          "    }",
+          "",
+          "    const json = response.json();",
+          "    pm.collectionVariables.set('meshAccessToken', json.accessToken || '');",
+          "  });",
+          "}"
+        ]
+      }
+    }
+  ],
   "variable": [
     {
       "key": "meshBaseUrl",
@@ -53,6 +104,38 @@
     {
       "key": "meshMissingEmailId",
       "value": ""
+    },
+    {
+      "key": "meshSelfUserId",
+      "value": "1"
+    },
+    {
+      "key": "meshProtectedPhoneId",
+      "value": "1"
+    },
+    {
+      "key": "meshSearchName",
+      "value": "Ivan"
+    },
+    {
+      "key": "meshSearchDateOfBirth",
+      "value": "1990-01-01"
+    },
+    {
+      "key": "meshExpectedDateOfBirth",
+      "value": "1993-05-01"
+    },
+    {
+      "key": "meshSearchPhone",
+      "value": "79207865432"
+    },
+    {
+      "key": "meshTransferToUserId",
+      "value": "2"
+    },
+    {
+      "key": "meshTransferAmount",
+      "value": "10.50"
     }
   ],
   "item": [
@@ -70,6 +153,7 @@
               "pm.collectionVariables.set('meshNewPhone', `79${String(ts).slice(-9)}`);",
               "pm.collectionVariables.set('meshUpdatedPhone', `78${String(ts).slice(-9)}`);",
               "pm.collectionVariables.set('meshMissingEmailId', String(900000000 + (ts % 1000000)));",
+              "pm.collectionVariables.set('meshTransferAmount', '10.50');",
               "const login = pm.collectionVariables.get('meshLogin') || '';",
               "if (!pm.collectionVariables.get('meshDuplicateEmail') && login.includes('@')) {",
               "  pm.collectionVariables.set('meshDuplicateEmail', login);",
@@ -413,6 +497,262 @@
           }
         ],
         "url": "{{meshBaseUrl}}/v1/me/emails/{{meshMissingEmailId}}"
+      }
+    },
+    {
+      "name": "11) Search Users by name/date/phone (GET /v1/users/search)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('200 OK', function () { pm.response.to.have.status(200); });",
+              "const json = pm.response.json();",
+              "pm.test('Search response has page metadata', function () {",
+              "  pm.expect(json.items).to.be.an('array');",
+              "  pm.expect(json.page).to.equal(0);",
+              "  pm.expect(json.size).to.equal(20);",
+              "  pm.expect(json.totalElements).to.be.at.least(1);",
+              "});",
+              "pm.test('Seed user is returned', function () {",
+              "  const user = json.items.find(item => String(item.id) === pm.collectionVariables.get('meshSelfUserId'));",
+              "  pm.expect(user).to.not.equal(undefined);",
+              "  pm.expect(user.name).to.include(pm.collectionVariables.get('meshSearchName'));",
+              "  pm.expect(user.dateOfBirth).to.equal(pm.collectionVariables.get('meshExpectedDateOfBirth'));",
+              "  pm.expect(user.phones).to.include(pm.collectionVariables.get('meshSearchPhone'));",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{meshAccessToken}}"
+          }
+        ],
+        "url": {
+          "raw": "{{meshBaseUrl}}/v1/users/search?name={{meshSearchName}}&dateOfBirth={{meshSearchDateOfBirth}}&phone={{meshSearchPhone}}&page=0&size=20",
+          "host": [
+            "{{meshBaseUrl}}"
+          ],
+          "path": [
+            "v1",
+            "users",
+            "search"
+          ],
+          "query": [
+            {
+              "key": "name",
+              "value": "{{meshSearchName}}"
+            },
+            {
+              "key": "dateOfBirth",
+              "value": "{{meshSearchDateOfBirth}}"
+            },
+            {
+              "key": "phone",
+              "value": "{{meshSearchPhone}}"
+            },
+            {
+              "key": "page",
+              "value": "0"
+            },
+            {
+              "key": "size",
+              "value": "20"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "12) Search Users cached repeat (GET /v1/users/search)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('200 OK', function () { pm.response.to.have.status(200); });",
+              "const json = pm.response.json();",
+              "pm.test('Repeated search returns same seed user shape', function () {",
+              "  pm.expect(json.items).to.be.an('array');",
+              "  pm.expect(json.items.some(item => String(item.id) === pm.collectionVariables.get('meshSelfUserId'))).to.equal(true);",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{meshAccessToken}}"
+          }
+        ],
+        "url": {
+          "raw": "{{meshBaseUrl}}/v1/users/search?name={{meshSearchName}}&dateOfBirth={{meshSearchDateOfBirth}}&phone={{meshSearchPhone}}&page=0&size=20",
+          "host": [
+            "{{meshBaseUrl}}"
+          ],
+          "path": [
+            "v1",
+            "users",
+            "search"
+          ],
+          "query": [
+            {
+              "key": "name",
+              "value": "{{meshSearchName}}"
+            },
+            {
+              "key": "dateOfBirth",
+              "value": "{{meshSearchDateOfBirth}}"
+            },
+            {
+              "key": "phone",
+              "value": "{{meshSearchPhone}}"
+            },
+            {
+              "key": "page",
+              "value": "0"
+            },
+            {
+              "key": "size",
+              "value": "20"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "13) Transfer Money (POST /v1/transfers)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('200 OK', function () { pm.response.to.have.status(200); });",
+              "const json = pm.response.json();",
+              "pm.test('Transfer response has expected ids and amount', function () {",
+              "  pm.expect(String(json.fromUserId)).to.equal(pm.collectionVariables.get('meshSelfUserId'));",
+              "  pm.expect(String(json.toUserId)).to.equal(pm.collectionVariables.get('meshTransferToUserId'));",
+              "  pm.expect(Number(json.amount)).to.equal(Number(pm.collectionVariables.get('meshTransferAmount')));",
+              "  pm.expect(json.fromBalance).to.be.a('number');",
+              "  pm.expect(json.toBalance).to.be.a('number');",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{meshAccessToken}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"toUserId\": {{meshTransferToUserId}},\n  \"amount\": {{meshTransferAmount}}\n}"
+        },
+        "url": "{{meshBaseUrl}}/v1/transfers"
+      }
+    },
+    {
+      "name": "14) Negative: transfer to self -> error",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Transfer to self returns error', function () {",
+              "  pm.expect(pm.response.code).to.be.at.least(400);",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{meshAccessToken}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"toUserId\": {{meshSelfUserId}},\n  \"amount\": {{meshTransferAmount}}\n}"
+        },
+        "url": "{{meshBaseUrl}}/v1/transfers"
+      }
+    },
+    {
+      "name": "15) Negative: delete last seed phone -> error",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Deleting last phone returns error', function () {",
+              "  pm.expect(pm.response.code).to.be.at.least(400);",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "DELETE",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{meshAccessToken}}"
+          }
+        ],
+        "url": "{{meshBaseUrl}}/v1/me/phones/{{meshProtectedPhoneId}}"
+      }
+    },
+    {
+      "name": "16) OpenAPI docs (GET /v3/api-docs)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('200 OK', function () { pm.response.to.have.status(200); });",
+              "const json = pm.response.json();",
+              "pm.test('OpenAPI document is available', function () {",
+              "  pm.expect(json.openapi).to.match(/^3\\./);",
+              "  pm.expect(json.paths).to.have.property('/v1/users/search');",
+              "  pm.expect(json.paths).to.have.property('/v1/transfers');",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": "{{meshBaseUrl}}/v3/api-docs"
       }
     }
   ]

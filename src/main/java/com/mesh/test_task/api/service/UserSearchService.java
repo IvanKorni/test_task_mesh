@@ -46,18 +46,29 @@ public class UserSearchService {
             Integer size
     ) {
         Pageable pageable = pageRequest(page, size);
-        Page<Long> userIdsPage = userRepository.searchUserIds(
-                clean(phone),
-                clean(email),
-                clean(name),
-                dateOfBirth,
-                pageable);
+        Page<Long> userIdsPage = searchUserIds(phone, email, name, dateOfBirth, pageable);
         List<UserSearchItemResponse> items = loadUsers(userIdsPage.getContent()).stream()
                 .map(userSearchMapper::toItemResponse)
                 .collect(Collectors.toList());
 
         Page<UserSearchItemResponse> usersPage = new PageImpl<>(items, pageable, userIdsPage.getTotalElements());
         return userSearchMapper.toResponse(usersPage);
+    }
+
+    private Page<Long> searchUserIds(
+            String phone,
+            String email,
+            String name,
+            LocalDate dateOfBirth,
+            Pageable pageable
+    ) {
+        String cleanPhone = clean(phone);
+        String cleanEmail = clean(email);
+        String cleanName = clean(name);
+        if (dateOfBirth == null) {
+            return userRepository.searchUserIds(cleanPhone, cleanEmail, cleanName, pageable);
+        }
+        return userRepository.searchUserIdsBornAfter(cleanPhone, cleanEmail, cleanName, dateOfBirth, pageable);
     }
 
     public static String cacheKey(
