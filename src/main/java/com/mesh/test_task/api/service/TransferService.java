@@ -7,8 +7,11 @@ import com.mesh.test_task.api.generated.model.TransferResponse;
 import com.mesh.test_task.api.repository.UserAccountRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import java.math.BigDecimal;
 import java.util.Arrays;
@@ -18,6 +21,7 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class TransferService {
     private final UserAccountRepository userAccountRepository;
 
@@ -71,6 +75,7 @@ public class TransferService {
 
     private void validateEnoughMoney(Account fromAccount, BigDecimal amount) {
         if (fromAccount.getBalance().compareTo(amount) < 0) {
+            log.warn("Money transfer rejected: fromUserId={}, amount={}", fromAccount.getUser().getId(), amount);
             throw new ApiException(HttpStatus.BAD_REQUEST, "Not enough money");
         }
     }

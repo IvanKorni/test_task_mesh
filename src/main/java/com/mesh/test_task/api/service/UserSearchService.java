@@ -1,5 +1,6 @@
 package com.mesh.test_task.api.service;
 
+import com.mesh.test_task.api.config.CacheConfig;
 import com.mesh.test_task.api.entity.User;
 import com.mesh.test_task.api.generated.model.UserSearchItemResponse;
 import com.mesh.test_task.api.generated.model.UserSearchResponse;
@@ -23,7 +24,6 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 public class UserSearchService {
-    private static final String USER_SEARCH_CACHE = "userSearch";
     private static final int DEFAULT_PAGE = 0;
     private static final int DEFAULT_SIZE = 20;
     private static final int MAX_SIZE = 100;
@@ -33,7 +33,7 @@ public class UserSearchService {
 
     @Transactional(readOnly = true)
     @Cacheable(
-            cacheNames = USER_SEARCH_CACHE,
+            cacheNames = CacheConfig.USER_SEARCH_CACHE,
             key = "T(com.mesh.test_task.api.service.UserSearchService).cacheKey("
                     + "#phone, #email, #name, #dateOfBirth, #page, #size)"
     )

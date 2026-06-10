@@ -4,8 +4,6 @@ spring:
   config:
     import: optional:file:.env[.properties]
   cache:
-    type: caffeine
-    cache-names: userSearch
     caffeine:
       spec: maximumSize=1000,expireAfterWrite=60s
   datasource:
