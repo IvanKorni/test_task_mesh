@@ -3,6 +3,11 @@ spring:
     name: test-task-mesh
   config:
     import: optional:file:.env[.properties]
+  cache:
+    type: caffeine
+    cache-names: userSearch
+    caffeine:
+      spec: maximumSize=1000,expireAfterWrite=60s
   datasource:
     url: jdbc:postgresql://localhost:5432/demo1
     username: ${DB_USERNAME}

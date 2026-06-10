@@ -10,6 +10,7 @@ import com.mesh.test_task.api.repository.UserPhoneRepository;
 import com.mesh.test_task.api.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.stereotype.Service;
 
 import javax.transaction.Transactional;
@@ -18,12 +19,15 @@ import javax.transaction.Transactional;
 @Service
 @RequiredArgsConstructor
 public class UserContactService {
+    private static final String USER_SEARCH_CACHE = "userSearch";
+
     private final UserEmailRepository userEmailRepository;
     private final UserRepository userRepository;
     private final UserContactMapper userContactMapper;
     private final UserPhoneRepository userPhoneRepository;
 
     @Transactional
+    @CacheEvict(cacheNames = USER_SEARCH_CACHE, allEntries = true)
     public UserEmailResponse addEmail(Long userId, AddEmailRequest request) {
         if (userEmailRepository.existsByEmail(request.getEmail())) {
             throw new RuntimeException("Email already exists");
@@ -39,6 +43,7 @@ public class UserContactService {
     }
 
     @Transactional
+    @CacheEvict(cacheNames = USER_SEARCH_CACHE, allEntries = true)
     public UserEmailResponse updateEmail(Long userId, Long emailId, UpdateEmailRequest request) {
         EmailData email = userEmailRepository.findByIdAndUser_Id(emailId, userId)
                 .orElseThrow(() -> new RuntimeException("Email not found"));
@@ -54,6 +59,7 @@ public class UserContactService {
     }
 
     @Transactional
+    @CacheEvict(cacheNames = USER_SEARCH_CACHE, allEntries = true)
     public void deleteEmail(Long userId, Long emailId) {
         EmailData email = userEmailRepository.findByIdAndUser_Id(emailId, userId)
                 .orElseThrow(() -> new RuntimeException("Email not found"));
@@ -64,6 +70,7 @@ public class UserContactService {
     }
 
     @Transactional
+    @CacheEvict(cacheNames = USER_SEARCH_CACHE, allEntries = true)
     public UserPhoneResponse addPhone(Long userId, AddPhoneRequest request) {
         if (userPhoneRepository.existsByPhone(request.getPhone())) {
             throw new RuntimeException("Phone already exists");
@@ -79,6 +86,7 @@ public class UserContactService {
     }
 
     @Transactional
+    @CacheEvict(cacheNames = USER_SEARCH_CACHE, allEntries = true)
     public UserPhoneResponse updatePhone(Long userId, Long phoneId, UpdatePhoneRequest request) {
         PhoneData phone = userPhoneRepository.findByIdAndUser_Id(phoneId, userId)
                 .orElseThrow(() -> new RuntimeException("Phone not found"));
@@ -94,6 +102,7 @@ public class UserContactService {
     }
 
     @Transactional
+    @CacheEvict(cacheNames = USER_SEARCH_CACHE, allEntries = true)
     public void deletePhone(Long userId, Long phoneId) {
         PhoneData phone = userPhoneRepository.findByIdAndUser_Id(phoneId, userId)
                 .orElseThrow(() -> new RuntimeException("Phone not found"));
