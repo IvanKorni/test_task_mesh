@@ -1,10 +1,12 @@
 package com.mesh.test_task.api.service;
 
+import com.mesh.test_task.api.exception.ApiException;
 import com.mesh.test_task.api.entity.User;
 import com.mesh.test_task.api.generated.model.LoginRequest;
 import com.mesh.test_task.api.generated.model.TokenResponse;
 import com.mesh.test_task.api.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
 import java.util.Optional;
@@ -19,7 +21,7 @@ public class AuthService {
         User user = findUserByLogin(request.getLogin());
 
         if (!user.getPassword().equals(request.getPassword())) {
-            throw new RuntimeException("Invalid login or password");
+            throw new ApiException(HttpStatus.UNAUTHORIZED, "Invalid login or password");
         }
 
         TokenResponse tokenResponse = new TokenResponse();
@@ -32,6 +34,6 @@ public class AuthService {
                 ? userRepository.findByEmail(login)
                 : userRepository.findByPhone(login);
 
-        return user.orElseThrow(() -> new RuntimeException("Invalid login or password"));
+        return user.orElseThrow(() -> new ApiException(HttpStatus.UNAUTHORIZED, "Invalid login or password"));
     }
 }

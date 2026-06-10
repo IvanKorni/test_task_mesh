@@ -187,6 +187,26 @@ paths:
               schema:
                 $ref: '#/components/schemas/UserSearchResponse'
 
+  /v1/transfers:
+    post:
+      summary: Перевести деньги другому пользователю
+      operationId: "transferMoney"
+      tags:
+        - UserInfo
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TransferRequest'
+      responses:
+        '200':
+          description: Деньги успешно переведены
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TransferResponse'
+
 components:
   schemas:
     UserEmailResponse:
@@ -310,6 +330,43 @@ components:
           format: int64
         totalPages:
           type: integer
+
+    TransferRequest:
+      type: object
+      required:
+        - toUserId
+        - amount
+      properties:
+        toUserId:
+          type: integer
+          format: int64
+        amount:
+          type: number
+          minimum: 0
+          exclusiveMinimum: true
+          multipleOf: 0.01
+
+    TransferResponse:
+      type: object
+      required:
+        - fromUserId
+        - toUserId
+        - amount
+        - fromBalance
+        - toBalance
+      properties:
+        fromUserId:
+          type: integer
+          format: int64
+        toUserId:
+          type: integer
+          format: int64
+        amount:
+          type: number
+        fromBalance:
+          type: number
+        toBalance:
+          type: number
 
   securitySchemes:
     bearerAuth:

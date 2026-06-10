@@ -2,6 +2,7 @@ package com.mesh.test_task.api.rest;
 
 import com.mesh.test_task.api.generated.UserInfoApi;
 import com.mesh.test_task.api.generated.model.*;
+import com.mesh.test_task.api.service.TransferService;
 import com.mesh.test_task.api.service.UserContactService;
 import com.mesh.test_task.api.service.UserSearchService;
 import lombok.RequiredArgsConstructor;
@@ -23,6 +24,7 @@ import java.time.LocalDate;
 public class CurrentUserInfoController implements UserInfoApi {
     private final UserContactService userContactService;
     private final UserSearchService userSearchService;
+    private final TransferService transferService;
 
     @Override
     public ResponseEntity<UserEmailResponse> addEmail(@RequestBody AddEmailRequest request) {
@@ -70,6 +72,12 @@ public class CurrentUserInfoController implements UserInfoApi {
             Integer size
     ) {
         UserSearchResponse response = userSearchService.searchUsers(phone, email, name, dateOfBirth, page, size);
+        return ResponseEntity.ok(response);
+    }
+
+    @Override
+    public ResponseEntity<TransferResponse> transferMoney(@RequestBody TransferRequest request) {
+        TransferResponse response = transferService.transfer(currentUserId(), request);
         return ResponseEntity.ok(response);
     }
 
